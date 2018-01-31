@@ -4,23 +4,25 @@ import utils
 
 
 class PotsdamDataGenerator:
-    def __init__(self, target_size, batch_size):
+    def __init__(self, target_size, batch_size, train_ratio=0.8):
         self.image_dir = "D:\\Attack On Footprints\\2_Ortho_RGB\\"
         self.label_dir = "D:\\Attack On Footprints\\5_Labels_for_participants\\"
+        self.train_ratio = train_ratio
         training_indexs = [(2, 10), (3, 10), (3, 11), (3, 12), (4, 11), (4, 12), (5, 10),
             (5, 12), (6, 10), (6, 11), (6, 12), (6, 8), (6, 9), (7, 11),
             (7, 12), (7, 7), (7, 9), (2, 11), (2, 12), (4, 10), (5, 11),
             (6, 7), (7, 10), (7, 8)]
-        val_indexs = [(2, 13), (2, 14), (3, 13), (3, 14), (4, 13), (4, 14), (4, 15),
+        test_indexs = [(2, 13), (2, 14), (3, 13), (3, 14), (4, 13), (4, 14), (4, 15),
             (5, 13), (5, 14), (5, 15), (6, 13), (6, 14), (6, 15), (7, 13)]
         def img_format(tup):
             return "top_potsdam_%d_%d_RGB.tif"%(tup[0], tup[1])
         def label_format(tup):
             return "top_potsdam_%d_%d_label.tif"%(tup[0], tup[1])
-        self.training_imgs = [img_format(i) for i in training_indexs]
-        self.val_imgs = [img_format(i) for i in val_indexs]
-        self.training_label = [label_format(i) for i in training_indexs]
-        self.val_label = [label_format(i) for i in val_indexs]
+        nb_train_inds = int(round(self.train_ratio * len(self.training_indexs)))
+        self.training_imgs = [img_format(i) for i in training_indexs[0:nb_train_inds]]
+        self.val_imgs = [img_format(i) for i in training_indexs[nb_train_inds:]]
+        self.training_label = [label_format(i) for i in training_indexs[0:nb_train_inds]]
+        self.val_label = [label_format(i) for i in training_indexs[nb_train_inds:]]
         self.target_size = target_size
         self.batch_size = batch_size
         self.num_bands = 3
