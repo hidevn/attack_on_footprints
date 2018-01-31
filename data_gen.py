@@ -18,7 +18,7 @@ class PotsdamDataGenerator:
             return "top_potsdam_%d_%d_RGB.tif"%(tup[0], tup[1])
         def label_format(tup):
             return "top_potsdam_%d_%d_label.tif"%(tup[0], tup[1])
-        nb_train_inds = int(round(self.train_ratio * len(self.training_indexs)))
+        nb_train_inds = int(round(train_ratio * len(training_indexs)))
         self.training_imgs = [img_format(i) for i in training_indexs[0:nb_train_inds]]
         self.val_imgs = [img_format(i) for i in training_indexs[nb_train_inds:]]
         self.training_label = [label_format(i) for i in training_indexs[0:nb_train_inds]]
