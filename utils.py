@@ -28,7 +28,7 @@ def read_single_image(path, num_bands = 3):
 # window: [[ymin, ymax], [xmin, xmax]]
 def read_window(path, window, num_bands = 3):
     image = read_single_image(path, num_bands)
-    print('reading window:')
+    print('reading window from +' + path + ':')
     print(window)
     return image[window[0][0]:window[0][1], window[1][0]:window[1][1], 0:num_bands]
 

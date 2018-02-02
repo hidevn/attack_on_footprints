@@ -14,20 +14,23 @@ class PotsdamDataGenerator:
             (6, 7), (7, 10), (7, 8)]
         test_indexs = [(2, 13), (2, 14), (3, 13), (3, 14), (4, 13), (4, 14), (4, 15),
             (5, 13), (5, 14), (5, 15), (6, 13), (6, 14), (6, 15), (7, 13)]
-        def img_format(tup):
-            return "top_potsdam_%d_%d_RGB.tif"%(tup[0], tup[1])
-        def label_format(tup):
-            return "top_potsdam_%d_%d_label.tif"%(tup[0], tup[1])
+
         nb_train_inds = int(round(train_ratio * len(training_indexs)))
-        self.training_imgs = [img_format(i) for i in training_indexs[0:nb_train_inds]]
-        self.val_imgs = [img_format(i) for i in training_indexs[nb_train_inds:]]
-        self.training_label = [label_format(i) for i in training_indexs[0:nb_train_inds]]
-        self.val_label = [label_format(i) for i in training_indexs[nb_train_inds:]]
+        self.training_imgs = training_indexs[0:nb_train_inds]
+        self.val_imgs = training_indexs[nb_train_inds:]
+        self.training_label = training_indexs[0:nb_train_inds]
+        self.val_label = training_indexs[nb_train_inds:]
         self.target_size = target_size
         self.batch_size = batch_size
         self.num_bands = 3
+        
+    def img_format(self, tup):
+        return "top_potsdam_%d_%d_RGB.tif"%(tup[0], tup[1])
+    def label_format(self, tup):
+        return "top_potsdam_%d_%d_label.tif"%(tup[0], tup[1])
     
-    def image_generator(self, folder_path, data_type):    
+    def image_generator(self, data_type):
+        folder_path = self.image_dir
         if data_type == 'train':
             image_names = self.training_imgs
         elif data_type == 'validation':
@@ -35,7 +38,8 @@ class PotsdamDataGenerator:
         else:
             return
         target_size = self.target_size
-        for f in image_names:
+        for tup in image_names:
+            f = self.img_format(tup)
             nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
             for row_begin in range(0, nb_rows, target_size[0]):
                 for col_begin in range(0, nb_cols, target_size[1]):
@@ -44,45 +48,56 @@ class PotsdamDataGenerator:
                     if row_end <= nb_rows and col_end <= nb_cols:
                         window = [[row_begin, row_end], [col_begin, col_end]]
                         img = utils.read_window(folder_path + f, window, self.num_bands)
-                        yield img, f
+                        yield img, self.get_label_from_tup(tup, window)
     
-    def label_generator(self, folder_path, data_type):
+    def random_image_generator(self, data_type):
+        folder_path = self.image_dir
         if data_type == 'train':
-            image_names = self.training_label
+            image_names = self.training_imgs
         elif data_type == 'validation':
-            image_names = self.val_label
+            image_names = self.val_imgs
         else:
             return
         target_size = self.target_size
-        for f in image_names:
+        nb_files = len(image_names)
+        target_size = self.target_size
+        while True:
+            ran = np.random.randint(0, nb_files)
+            tup = image_names[ran]
+            f = self.img_format(tup)
             nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
-            for row_begin in range(0, nb_rows, target_size[0]):
-                for col_begin in range(0, nb_cols, target_size[1]):
-                    row_end = row_begin + target_size[0]
-                    col_end = col_begin + target_size[1]
-                    if row_end <= nb_rows and col_end <= nb_cols:
-                        window = [[row_begin, row_end], [col_begin, col_end]]
-                        img = utils.read_window(folder_path + f, window, self.num_bands)
-                        img = self.label_encoding(img)
-                        yield img, f
+            row_begin = np.random.randint(0, nb_rows - target_size[0] + 1)
+            col_begin = np.random.randint(0, nb_cols - target_size[1] + 1)
+            row_end = row_begin + target_size[0]
+            col_end = col_begin + target_size[1]
+            window = ((row_begin, row_end), (col_begin, col_end))
+            img = utils.read_window(folder_path + f, window, self.num_bands)
+            yield img, self.get_label_from_tup(tup, window)
+            
+                        
+    def get_label_from_tup(self, tup, window):
+        f = self.label_format(tup)
+        folder_path = self.label_dir
+        label = utils.read_window(folder_path + f, window, self.num_bands)
+        label = self.label_encoding(label)
+        return label
                         
     def batch_generator(self, data_type):
         batch_size = self.batch_size
-        img_gen = self.image_generator(self.image_dir, data_type)
-        label_gen = self.label_generator(self.label_dir, data_type)
+        img_gen = self.random_image_generator(data_type)
         while True:
             batch = []
             batch_label = []
             try:
                 for i in range(0, batch_size):
-                    img, _ = next(img_gen)
-                    label, _ = next(label_gen)
+                    img, label = next(img_gen)
                     batch.append(img)
                     batch_label.append(label)
             except StopIteration:
                 if len(batch) > 0:
                     yield np.array(batch), np.array(batch_label)
                 raise StopIteration
+            print('Created batch')
             yield np.array(batch), np.array(batch_label)
     
     def transform_generator(self, data_type):
