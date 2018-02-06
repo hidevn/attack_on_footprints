@@ -19,7 +19,6 @@ def make_callbacks(run_path, options):
     return callbacks
 
 def train_model(run_path, model, options, generator):
-    print(model.summary())
     train_gen = generator.transform_generator('train')
     validation_gen = generator.transform_generator('validation')
     

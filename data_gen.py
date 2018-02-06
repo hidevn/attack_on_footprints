@@ -1,6 +1,6 @@
 import numpy as np
 import utils
-
+from matplotlib import pyplot as plt
 
 
 class PotsdamDataGenerator:
@@ -65,6 +65,7 @@ class PotsdamDataGenerator:
             ran = np.random.randint(0, nb_files)
             tup = image_names[ran]
             f = self.img_format(tup)
+            img = utils.read_single_image(folder_path + f, self.num_bands)
             nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
             row_begin = np.random.randint(0, nb_rows - target_size[0] + 1)
             col_begin = np.random.randint(0, nb_cols - target_size[1] + 1)
@@ -97,7 +98,6 @@ class PotsdamDataGenerator:
                 if len(batch) > 0:
                     yield np.array(batch), np.array(batch_label)
                 raise StopIteration
-            print('Created batch')
             yield np.array(batch), np.array(batch_label)
     
     def transform_generator(self, data_type):
@@ -106,17 +106,19 @@ class PotsdamDataGenerator:
         def transform(x):
             batch, batch_label = x
             batch = batch.astype(np.float32)
-
             nb_rotations = np.random.randint(0, 4)
             batch = np.transpose(batch, [1, 2, 3, 0])
             batch = np.rot90(batch, nb_rotations)
             batch = np.transpose(batch, [3, 0, 1, 2])
-
+            batch_label = np.transpose(batch_label, [1, 2, 3, 0])
+            batch_label = np.rot90(batch_label, nb_rotations)
+            batch_label = np.transpose(batch_label, [3, 0, 1, 2])
             if np.random.uniform() > 0.5:
                 batch = np.flip(batch, axis=1)
+                batch_label = np.flip(batch_label, axis=1)
             if np.random.uniform() > 0.5:
                 batch = np.flip(batch, axis=2)
-                
+                batch_label = np.flip(batch_label, axis=2) 
             batch = self.normalize(batch)
             return batch, batch_label
             
