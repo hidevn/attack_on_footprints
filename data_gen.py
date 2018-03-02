@@ -1,6 +1,7 @@
 import numpy as np
 import utils
 from matplotlib import pyplot as plt
+import time
 
 
 class PotsdamDataGenerator:
@@ -38,17 +39,20 @@ class PotsdamDataGenerator:
         else:
             return
         target_size = self.target_size
-        for tup in image_names:
-            f = self.img_format(tup)
-            nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
-            for row_begin in range(0, nb_rows, target_size[0]):
-                for col_begin in range(0, nb_cols, target_size[1]):
-                    row_end = row_begin + target_size[0]
-                    col_end = col_begin + target_size[1]
-                    if row_end <= nb_rows and col_end <= nb_cols:
-                        window = [[row_begin, row_end], [col_begin, col_end]]
-                        img = utils.read_window(folder_path + f, window, self.num_bands)
-                        yield img, self.get_label_from_tup(tup, window)
+        while True:
+            for tup in image_names:
+                f = self.img_format(tup)
+                # nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
+                nb_rows, nb_cols, _ = (256, 256, 3)
+                c_img = utils.read_single_image(folder_path + f, 3)
+                for row_begin in range(0, nb_rows, target_size[0]):
+                    for col_begin in range(0, nb_cols, target_size[1]):
+                        row_end = row_begin + target_size[0]
+                        col_end = col_begin + target_size[1]
+                        if row_end <= nb_rows and col_end <= nb_cols:
+                            window = [[row_begin, row_end], [col_begin, col_end]]
+                            img = utils.read_img_window(c_img, window, self.num_bands)
+                            yield img, self.get_label_from_tup(tup, window)
     
     def random_image_generator(self, data_type):
         folder_path = self.image_dir
@@ -65,16 +69,25 @@ class PotsdamDataGenerator:
             ran = np.random.randint(0, nb_files)
             tup = image_names[ran]
             f = self.img_format(tup)
-            img = utils.read_single_image(folder_path + f, self.num_bands)
-            nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
+            start = time.time()
+            # print('Reading image: ' + str(ran))
+            # c_img = utils.read_single_image(folder_path + f, self.num_bands)
+            # c_label = utils.read_single_image(self.label_dir + self.label_format(tup), self.num_bands)
+            # nb_rows, nb_cols, _ = utils.get_image_size(folder_path + f, self.num_bands)
+            nb_rows, nb_cols, _ = (256, 256, 3)
             row_begin = np.random.randint(0, nb_rows - target_size[0] + 1)
             col_begin = np.random.randint(0, nb_cols - target_size[1] + 1)
             row_end = row_begin + target_size[0]
             col_end = col_begin + target_size[1]
             window = ((row_begin, row_end), (col_begin, col_end))
             img = utils.read_window(folder_path + f, window, self.num_bands)
-            yield img, self.get_label_from_tup(tup, window)
-            
+            label = utils.read_window(self.label_dir + self.label_format(tup), window, self.num_bands)
+            one_hot_label = self.label_encoding(label)
+            # print('Finished')
+            end = time.time()
+            print('Read image: ' + str(ran) + ', time: ' + str(end-start))
+            yield img, one_hot_label
+            # c_img = c_label = None
                         
     def get_label_from_tup(self, tup, window):
         f = self.label_format(tup)
@@ -85,7 +98,7 @@ class PotsdamDataGenerator:
                         
     def batch_generator(self, data_type):
         batch_size = self.batch_size
-        img_gen = self.random_image_generator(data_type)
+        img_gen = self.image_generator(data_type)
         while True:
             batch = []
             batch_label = []

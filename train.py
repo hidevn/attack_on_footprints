@@ -19,9 +19,11 @@ def make_callbacks(run_path, options):
     return callbacks
 
 def train_model(run_path, model, options, generator):
-    train_gen = generator.transform_generator('train')
-    validation_gen = generator.transform_generator('validation')
+    #train_gen = generator.transform_generator('train')
+    #validation_gen = generator.transform_generator('validation')
     
+    train_gen = generator.batch_generator('train')
+    validation_gen = generator.batch_generator('validation')
     model.compile(Adam(lr = options['init_lr']), 'categorical_crossentropy', metrics = ['accuracy'])
     
     callback = make_callbacks(run_path, options)

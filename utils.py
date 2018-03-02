@@ -30,6 +30,9 @@ def read_window(path, window, num_bands = 3):
     image = read_single_image(path, num_bands)
     return image[window[0][0]:window[0][1], window[1][0]:window[1][1], 0:num_bands]
 
+def read_img_window(image, window, num_bands = 3):
+    return image[window[0][0]:window[0][1], window[1][0]:window[1][1], 0:num_bands]
+
 def get_image_size(path, num_bands = 3):
     image = read_single_image(path, num_bands)
     return image.shape

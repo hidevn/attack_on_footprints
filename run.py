@@ -4,7 +4,7 @@ import train
 
 generator = data_gen.PotsdamDataGenerator((256, 256), 8)
 options = {"lr_schedule": [(0, 1e-5), (80, 1e-6)],
-           "epochs": 100,
+           "epochs": 1,
            "init_lr": 1e-5,
            "steps_per_epoch": 512,
            "validation_steps": 128
