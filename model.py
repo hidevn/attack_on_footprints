@@ -28,7 +28,8 @@ def fcn_resnet(input_shape, nb_labels):
     m = Add(name='merge_labels')([r32, r16, r8])
     
     x = Reshape((nb_rows * nb_cols, nb_labels))(m)
-    x = Activation('softmax')(x)
+    # x = Activation('softmax')(x)
+    x = Activation('sigmoid')(x)
     x = Reshape((nb_rows, nb_cols, nb_labels))(x)
     
     model = Model(inputs = input_tensor, outputs = x)

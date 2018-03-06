@@ -104,6 +104,7 @@ class PotsdamDataGenerator:
             batch_label = []
             try:
                 for i in range(0, batch_size):
+                    start = time.time()
                     img, label = next(img_gen)
                     batch.append(img)
                     batch_label.append(label)
@@ -111,6 +112,8 @@ class PotsdamDataGenerator:
                 if len(batch) > 0:
                     yield np.array(batch), np.array(batch_label)
                 raise StopIteration
+            end = time.time()
+            print('time: ' + str(end - start))
             yield np.array(batch), np.array(batch_label)
     
     def transform_generator(self, data_type):
@@ -144,8 +147,10 @@ class PotsdamDataGenerator:
         tree = [0, 255, 0]
         car = [255, 255, 0]
         background = [255, 0, 0]
-        label_tensor = np.zeros((*label_file.shape[0:2], 6))
+        # label_tensor = np.zeros((*label_file.shape[0:2], 6))
+        label_tensor = np.zeros((*label_file.shape[0:2], 1))
         nb_rows, nb_cols, _ = label_file.shape
+        '''
         for i in range(0, nb_rows):
             for j in range(0, nb_cols):
                 pixel_rgb = label_file[i, j, :]
@@ -161,6 +166,12 @@ class PotsdamDataGenerator:
                     label_tensor[i, j, 4] = 1
                 elif np.array_equal(pixel_rgb, background):
                     label_tensor[i, j, 5] = 1
+        '''
+        for i in range(0, nb_rows):
+            for j in range(0, nb_cols):
+                pixel_rgb = label_file[i, j, :]
+                if np.array_equal(pixel_rgb, building):
+                    label_tensor[i, j, 0] = 1
         return label_tensor
     
     def normalize(self, batch):

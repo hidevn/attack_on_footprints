@@ -19,7 +19,7 @@ def predict(path, x_start = 0, y_start = 0, m = None):
         m = model.fcn_resnet((256, 256, 3), 6)
         m.load_weights('./model.h5')
     nb_rows, nb_cols, _ = np.shape(img)
-    img = scipy.misc.imresize(img, (512, 512, 3))
+    # img = scipy.misc.imresize(img, (512, 512, 3))
     plt.imshow(img)
     '''
     result = np.zeros((nb_rows, nb_cols, 6))

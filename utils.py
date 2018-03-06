@@ -23,6 +23,13 @@ def read_single_image(path, num_bands = 3):
         image[:, :, 2] = f.read(3)
         image = image.astype('uint8')
         return image
+    
+def read_label(path):
+    with rasterio.open(path) as f:
+        img_shape = f.shape
+        img = np.ones((*img_shape, 1))
+        img[:, :, 0] = f.read(1)
+        return img
 
 # @params:
 # window: [[ymin, ymax], [xmin, xmax]]
